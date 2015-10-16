@@ -22,6 +22,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.NumberFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -160,8 +161,8 @@ public final class NTPClient implements AutoCloseable {
                 try {
                     Thread.sleep(poll_ms);
                     TimeInfo ti = ntpUdpClient.getTime(hostAddr);
-                    long diff0 = ti.getMessage().getReceiveTimeStamp().getTime() - System.currentTimeMillis();
-                    System.out.println("diff0 = " + diff0);
+//                    long diff0 = ti.getMessage().getReceiveTimeStamp().getTime() - System.currentTimeMillis();
+//                    System.out.println("diff0 = " + diff0);
                     this.setTimeInfo(ti);
                 } catch ( SocketTimeoutException ste) {
                 } 
@@ -202,22 +203,25 @@ public final class NTPClient implements AutoCloseable {
 
     public long currentTimeMillis() {
         long diff = System.currentTimeMillis() - timeInfoSetLocalTime;
-        System.out.println("diff = " + diff);
+//        System.out.println("diff = " + diff);
         return timeInfo.getMessage().getReceiveTimeStamp().getTime() + diff;
     }
 
     public static void main(String[] args) throws UnknownHostException, SocketException, InterruptedException, IOException {
+        if(args.length < 1) {
+            args = new String[]{"time-a.nist.gov"};
+        }
         
-        NTPClient ntp = new NTPClient("time-a.nist.gov", 100);
+        NTPClient ntp = new NTPClient(args[0], 100);
         
-        for(int i =0; i < 100; i++) {
-            Thread.sleep(200);
+        for(int i =0; i < 10; i++) {
+            Thread.sleep(1000);
             long t1 = System.currentTimeMillis();
             long t2 = ntp.currentTimeMillis();
             long t3 = System.currentTimeMillis();
             
-            System.out.println("t2-t1 = " + (t2-t1));
-            System.out.println("(t3-t2) = " + (t3-t2));
+            Date d = new Date(t2);
+            System.out.println(d + " :  diff = " + (t3-t2)+ " ms");
         }
 //        if (args.length == 0) {
 //            args = new String[]{"time.nist.gov"};
