@@ -47,8 +47,7 @@ import org.apache.commons.net.ntp.TimeStamp;
  * <br>
  * Example: NTPClient clock.psu.edu
  *
- * @author Jason Mathews, MITRE Corp
- **
+ * @author Jason Mathews, MITRE Corp *
  */
 public final class NTPClient implements AutoCloseable {
 
@@ -155,6 +154,7 @@ public final class NTPClient implements AutoCloseable {
     NTPUDPClient ntpUdpClient;
     Thread pollThread = null;
     final long poll_ms;
+
     private void pollNtpServer() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -164,23 +164,23 @@ public final class NTPClient implements AutoCloseable {
 //                    long diff0 = ti.getMessage().getReceiveTimeStamp().getTime() - System.currentTimeMillis();
 //                    System.out.println("diff0 = " + diff0);
                     this.setTimeInfo(ti);
-                } catch ( SocketTimeoutException ste) {
-                } 
+                } catch (SocketTimeoutException ste) {
+                }
             }
         } catch (InterruptedException interruptedException) {
         } catch (IOException ex) {
             Logger.getLogger(NTPClient.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public NTPClient(String host, int poll_ms) throws UnknownHostException, SocketException {
         this.poll_ms = poll_ms;
         hostAddr = InetAddress.getByName(host);
         ntpUdpClient = new NTPUDPClient();
         ntpUdpClient.setDefaultTimeout(10000);
         ntpUdpClient.open();
-        ntpUdpClient.setSoTimeout(poll_ms*2 + 20);
-        pollThread = new Thread(this::pollNtpServer, "pollNtpServer("+host+","+poll_ms+")");
+        ntpUdpClient.setSoTimeout(poll_ms * 2 + 20);
+        pollThread = new Thread(this::pollNtpServer, "pollNtpServer(" + host + "," + poll_ms + ")");
         pollThread.start();
     }
 
@@ -207,21 +207,22 @@ public final class NTPClient implements AutoCloseable {
         return timeInfo.getMessage().getReceiveTimeStamp().getTime() + diff;
     }
 
-    public static void main(String[] args) throws UnknownHostException, SocketException, InterruptedException, IOException {
-        if(args.length < 1) {
+    public static void main(String[] args) throws UnknownHostException, SocketException, InterruptedException, IOException, Exception {
+        if (args.length < 1) {
             args = new String[]{"time-a.nist.gov"};
         }
-        
-        NTPClient ntp = new NTPClient(args[0], 100);
-        
-        for(int i =0; i < 10; i++) {
-            Thread.sleep(1000);
-            long t1 = System.currentTimeMillis();
-            long t2 = ntp.currentTimeMillis();
-            long t3 = System.currentTimeMillis();
-            
-            Date d = new Date(t2);
-            System.out.println(d + " :  diff = " + (t3-t2)+ " ms");
+
+        try (NTPClient ntp = new NTPClient(args[0], 100)) {
+
+            for (int i = 0; i < 10; i++) {
+                Thread.sleep(1000);
+                long t1 = System.currentTimeMillis();
+                long t2 = ntp.currentTimeMillis();
+                long t3 = System.currentTimeMillis();
+
+                Date d = new Date(t2);
+                System.out.println(d + " :  diff = " + (t3 - t2) + " ms");
+            }
         }
 //        if (args.length == 0) {
 //            args = new String[]{"time.nist.gov"};
@@ -259,7 +260,7 @@ public final class NTPClient implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        if(null != pollThread) {
+        if (null != pollThread) {
             pollThread.interrupt();
             pollThread.join(200);
             pollThread = null;
@@ -268,7 +269,7 @@ public final class NTPClient implements AutoCloseable {
             ntpUdpClient.close();
             ntpUdpClient = null;
         }
-        
+
     }
 
     protected void finalizer() {
